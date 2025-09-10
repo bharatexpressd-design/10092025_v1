@@ -19,3 +19,4 @@ staticfiles/
 *.log
 *.pot
 *.DS_Store
+commit_files.txt
