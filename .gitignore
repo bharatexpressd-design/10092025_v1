@@ -20,3 +20,5 @@ staticfiles/
 *.pot
 *.DS_Store
 commit_files.txt
+
+media/
