@@ -1,6 +1,5 @@
 {% extends "base.html" %}
-{% load cart_tags %}
-{% load static django_bootstrap5 cart_tags %}
+{% load cart_tags django_bootstrap5 %}
 
 {% block content %}
 <h1>Your Cart</h1>
@@ -20,10 +19,10 @@
             {% for item in cart_items %}
             <tr>
                 <td>{{ item.product.name }}</td>
-                <td>${{ item.product.price }}</td>
+                <td>${{ item.product.price|floatformat:2 }}</td>
                 <td>{{ item.quantity }}</td>
                 <td>${{ item.product.price|floatformat:2|multiply:item.quantity }}</td>
-                <td><a href="#" class="btn btn-danger btn-sm">Remove</a></td>
+                <td><a href="{% url 'cart_remove' item.product.id %}" class="btn btn-danger btn-sm">Remove</a></td>
             </tr>
             {% endfor %}
         </tbody>
