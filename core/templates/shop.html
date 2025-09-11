@@ -4,6 +4,30 @@
 {% block content %}
 <h1>Shop</h1>
 <div class="container">
+    <!-- Search Form -->
+    <form method="get" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="q" class="form-control" placeholder="Search products..." value="{{ request.GET.q }}">
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+    </form>
+
+    <!-- Category Filter -->
+    <form method="get" class="mb-4">
+        <div class="input-group">
+            <select name="category" class="form-select">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                <option value="{{ category.slug }}" {% if request.GET.category == category.slug %}selected{% endif %}>
+                    {{ category.name }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </div>
+    </form>
+
+    <!-- Product List -->
     <div class="row">
         {% for product in products %}
         <div class="col-md-4">
