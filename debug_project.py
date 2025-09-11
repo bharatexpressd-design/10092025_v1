@@ -4,18 +4,30 @@ from pathlib import Path
 from django.conf import settings
 from django.urls import reverse
 import django
+import logging
+
+# Configure logging
+logging.basicConfig(
+    filename='debug.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Set up Django environment
 def setup_django():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ecommerce.settings')
     try:
         django.setup()
+        logger.info("Django setup completed successfully")
     except Exception as e:
+        logger.error(f"Failed to setup Django: {e}")
         print(f"Failed to setup Django: {e}")
         sys.exit(1)
 
 # Check settings.py configuration
 def check_settings():
+    logger.info("Checking settings.py...")
     print("Checking settings.py...")
     issues = []
     
@@ -36,10 +48,15 @@ def check_settings():
     if not templates or not templates[0].get('APP_DIRS', False):
         issues.append("TEMPLATES setting missing or APP_DIRS not enabled")
     
+    # Check session settings
+    if not hasattr(settings, 'SESSION_ENGINE') or settings.SESSION_ENGINE != 'django.contrib.sessions.backends.db':
+        issues.append("SESSION_ENGINE not set to 'django.contrib.sessions.backends.db'")
+    
     return issues
 
 # Check template files for load tags
 def check_templates():
+    logger.info("Checking template files...")
     print("Checking template files...")
     issues = []
     template_dir = Path('core/templates')
@@ -67,6 +84,7 @@ def check_templates():
     # Check admin template overrides
     admin_login = Path('core/templates/admin/login.html')
     admin_base = Path('core/templates/admin/base.html')
+    registration_login = Path('core/templates/registration/login.html')
     if admin_login.exists():
         with open(admin_login, 'r', encoding='utf-8') as f:
             if '<link rel="icon"' not in f.read():
@@ -79,11 +97,18 @@ def check_templates():
                 issues.append(f"{admin_base}: Missing favicon tag")
     else:
         issues.append(f"{admin_base}: Admin base template override not found")
+    if registration_login.exists():
+        with open(registration_login, 'r', encoding='utf-8') as f:
+            if '{% url \'signup\' %}' in f.read():
+                issues.append(f"{registration_login}: References non-existent 'signup' URL")
+    else:
+        issues.append(f"{registration_login}: Registration login template not found")
     
     return issues
 
 # Check static files
 def check_static_files():
+    logger.info("Checking static files...")
     print("Checking static files...")
     issues = []
     static_files = [
@@ -99,11 +124,15 @@ def check_static_files():
 
 # Check URL routing
 def check_urls():
+    logger.info("Checking URLs...")
     print("Checking URLs...")
     issues = []
     try:
         reverse('home')
         reverse('shop')
+        reverse('add_to_cart', args=[1])  # Test with a dummy product ID
+        reverse('cart')
+        reverse('login')
     except Exception as e:
         issues.append(f"URL routing error: {e}")
     return issues
@@ -119,10 +148,13 @@ def debug_project():
     all_issues.extend(check_urls())
     
     if all_issues:
+        logger.warning("Issues found:")
         print("\nIssues found:")
         for issue in all_issues:
+            logger.warning(f"- {issue}")
             print(f"- {issue}")
     else:
+        logger.info("No issues found. Project configuration looks good!")
         print("\nNo issues found. Project configuration looks good!")
     
     return len(all_issues) == 0
@@ -131,5 +163,6 @@ if __name__ == "__main__":
     try:
         debug_project()
     except Exception as e:
+        logger.error(f"Debug failed: {e}")
         print(f"Debug failed: {e}")
         sys.exit(1)
