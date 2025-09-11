@@ -142,3 +142,26 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 # Add to the end of settings.py
 LOGIN_REDIRECT_URL = '/shop/'  # Redirect to shop after login
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'server.log',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
