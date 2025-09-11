@@ -15,7 +15,6 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -26,7 +25,6 @@ SECRET_KEY = 'django-insecure-6l@0!z3#k2#f%j0!q#e7z#n^7%y@2o#9n!z#k2#f%j0!q#e7z'
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -56,7 +54,7 @@ ROOT_URLCONF = 'ecommerce.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'core/templates'],  # Ensure this line exists
+        'DIRS': [BASE_DIR / 'core/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -71,7 +69,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ecommerce.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
@@ -81,7 +78,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -101,7 +97,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -112,7 +107,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
@@ -142,3 +136,9 @@ X_FRAME_OPTIONS = 'DENY'
 SECURE_HSTS_SECONDS = 3600  # Enable HSTS in production
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
+
+# Session settings
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+# Add to the end of settings.py
+LOGIN_REDIRECT_URL = '/shop/'  # Redirect to shop after login
