@@ -139,6 +139,7 @@ SECURE_HSTS_PRELOAD = True
 
 # Session settings
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 1209600  # 2 weeks
 
 # Add to the end of settings.py
 LOGIN_REDIRECT_URL = '/shop/'  # Redirect to shop after login
