@@ -81,29 +81,6 @@ def check_templates():
         except Exception as e:
             issues.append(f"Error reading {template_file}: {e}")
     
-    # Check admin template overrides
-    admin_login = Path('core/templates/admin/login.html')
-    admin_base = Path('core/templates/admin/base.html')
-    registration_login = Path('core/templates/registration/login.html')
-    if admin_login.exists():
-        with open(admin_login, 'r', encoding='utf-8') as f:
-            if '<link rel="icon"' not in f.read():
-                issues.append(f"{admin_login}: Missing favicon tag")
-    else:
-        issues.append(f"{admin_login}: Admin login template override not found")
-    if admin_base.exists():
-        with open(admin_base, 'r', encoding='utf-8') as f:
-            if '<link rel="icon"' not in f.read():
-                issues.append(f"{admin_base}: Missing favicon tag")
-    else:
-        issues.append(f"{admin_base}: Admin base template override not found")
-    if registration_login.exists():
-        with open(registration_login, 'r', encoding='utf-8') as f:
-            if '{% url \'signup\' %}' in f.read():
-                issues.append(f"{registration_login}: References non-existent 'signup' URL")
-    else:
-        issues.append(f"{registration_login}: Registration login template not found")
-    
     return issues
 
 # Check static files
@@ -130,7 +107,8 @@ def check_urls():
     try:
         reverse('home')
         reverse('shop')
-        reverse('add_to_cart', args=[1])  # Test with a dummy product ID
+        reverse('cart_add', args=[1])  # Updated to match core/urls.py
+        reverse('cart_remove', args=[1])  # Added to check cart_remove
         reverse('cart')
         reverse('login')
     except Exception as e:

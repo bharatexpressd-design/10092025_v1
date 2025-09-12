@@ -1,8 +1,6 @@
-{% extends 'base.html' %}
-
-{% block title %}{{ title }}{% endblock %}
-
+{% extends "base.html" %}
+{% block title %}Welcome to BharatBloom{% endblock %}
 {% block content %}
-<h1>Welcome to BestEcom!</h1>
-<p>Your one-stop shop for everything. Start browsing our <a href="/shop/">products</a>.</p>
+<h1>Welcome to BharatBloom</h1>
+<p>Explore our products at <a href="{% url 'shop' %}">Shop</a>.</p>
 {% endblock %}

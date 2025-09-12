@@ -1,9 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Product, Category, Cart
 
 def home(request):
-    return render(request, 'home.html', {'title': 'Welcome to BestEcom'})
+    return render(request, 'home.html', {'title': 'Welcome to BharatBloom'})
 
 def shop(request):
     products = Product.objects.filter(available=True)
@@ -22,7 +22,7 @@ def shop(request):
 
 @login_required
 def add_to_cart(request, product_id):
-    product = Product.objects.get(id=product_id)
+    product = get_object_or_404(Product, id=product_id)
     cart_item, created = Cart.objects.get_or_create(
         user=request.user,
         product=product,
@@ -42,3 +42,9 @@ def cart(request):
         'cart_items': cart_items,
         'total_price': total_price
     })
+
+@login_required
+def remove_from_cart(request, product_id):
+    cart_item = get_object_or_404(Cart, user=request.user, product_id=product_id)
+    cart_item.delete()
+    return redirect('cart')
