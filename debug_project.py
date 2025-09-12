@@ -68,12 +68,17 @@ def check_templates():
                 load_static = False
                 load_bootstrap = False
                 
+                # Check all load tags in the file
+                for line in lines:
+                    line = line.strip()
+                    if '{% load ' in line and 'static' in line:
+                        load_static = True
+                    if '{% load ' in line and 'django_bootstrap5' in line:
+                        load_bootstrap = True
+                
+                # Check for usage of tags
                 for i, line in enumerate(lines, 1):
                     line = line.strip()
-                    if '{% load static %}' in line:
-                        load_static = True
-                    if '{% load django_bootstrap5 %}' in line:
-                        load_bootstrap = True
                     if '{% static ' in line and not load_static:
                         issues.append(f"{template_file}: Uses 'static' tag on line {i} but '{{% load static %}}' not found earlier")
                     if ('{% bootstrap_css %}' in line or '{% bootstrap_javascript %}' in line) and not load_bootstrap:
@@ -107,8 +112,8 @@ def check_urls():
     try:
         reverse('home')
         reverse('shop')
-        reverse('cart_add', args=[1])  # Updated to match core/urls.py
-        reverse('cart_remove', args=[1])  # Added to check cart_remove
+        reverse('cart_add', args=[1])
+        reverse('cart_remove', args=[1])
         reverse('cart')
         reverse('login')
     except Exception as e:
