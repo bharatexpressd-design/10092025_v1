@@ -4,7 +4,12 @@ from django.utils.text import slugify
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(max_length=100, unique=True)
+    description = models.TextField(blank=True, help_text="Optional description for the category")
+
+    class Meta:
+        ordering = ['name']
+        verbose_name_plural = 'categories'
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -22,6 +27,11 @@ class Product(models.Model):
     available = models.BooleanField(default=True)
     stock = models.PositiveIntegerField(default=0)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    material = models.CharField(max_length=100, blank=True, help_text="E.g., cotton, silk, wood")
+    region = models.CharField(max_length=100, blank=True, help_text="E.g., Banaras, Kanjivaram")
+
+    class Meta:
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -31,6 +41,9 @@ class Cart(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
 
     def __str__(self):
         return f"{self.quantity} x {self.product.name}"

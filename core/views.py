@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
+from django.http import HttpResponseBadRequest
 from .models import Product, Cart, Category
 import razorpay
 
@@ -65,14 +66,16 @@ def checkout(request):
         return HttpResponseBadRequest('Cart is empty or total price is too low')
     client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
     payment_data = {
-        'amount': int(total_price * 100),  # Convert to paise
+        'amount': int(total_price * 100),
         'currency': 'INR',
         'receipt': f'order_{request.user.id}',
         'payment_capture': 1
     }
     try:
         order = client.order.create(data=payment_data)
+        print("Razorpay Order Response:", order)
     except razorpay.errors.BadRequestError as e:
+        print("Razorpay Error:", str(e))
         return HttpResponseBadRequest(f'Payment error: {str(e)}')
     return render(request, 'checkout.html', {
         'cart_items': cart_items,

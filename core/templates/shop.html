@@ -9,11 +9,19 @@
             <input type="text" name="q" class="form-control" placeholder="Search products..." value="{{ request.GET.q }}">
             <button type="submit" class="btn btn-primary">Search</button>
         </div>
+        <div class="input-group mt-2">
+            <input type="text" name="material" class="form-control" placeholder="Filter by material (e.g., cotton, silk)" value="{{ request.GET.material }}">
+            <input type="text" name="region" class="form-control" placeholder="Filter by region (e.g., Banaras)" value="{{ request.GET.region }}">
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </div>
     </form>
     <div class="mb-3">
         <a href="{% url 'shop' %}" class="btn btn-secondary">All Categories</a>
         {% for category in categories %}
         <a href="{% url 'shop' %}?category={{ category.slug }}" class="btn btn-outline-secondary">{{ category.name }}</a>
+        {% if category.description %}
+        <p class="text-muted">{{ category.description }}</p>
+        {% endif %}
         {% endfor %}
     </div>
     <div class="row">
@@ -25,7 +33,13 @@
                 {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ product.name }}</h5>
-                    <p class="card-text">${{ product.price|floatformat:2 }}</p>
+                    <p class="card-text">₹{{ product.price|floatformat:2 }}</p>
+                    {% if product.material or product.region %}
+                    <p class="card-text text-muted">
+                        {% if product.material %}Material: {{ product.material }}{% endif %}
+                        {% if product.region %}| Region: {{ product.region }}{% endif %}
+                    </p>
+                    {% endif %}
                     <a href="{% url 'cart_add' product.id %}" class="btn btn-primary">Add to Cart</a>
                 </div>
             </div>

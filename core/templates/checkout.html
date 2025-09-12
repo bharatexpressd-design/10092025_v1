@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load cart_tags django_bootstrap5 %}
+
+{% block content %}
+<h1>Checkout</h1>
+<div class="container">
+    {% if cart_items %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in cart_items %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>₹{{ item.product.price|floatformat:2 }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>₹{{ item.product.price|multiply:item.quantity|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h3>Total: ₹{{ total_price|floatformat:2 }}</h3>
+    <button id="rzp-button" class="btn btn-success">Pay with Razorpay</button>
+    <a href="{% url 'cart' %}" class="btn btn-secondary">Back to Cart</a>
+    {% else %}
+    <p>Your cart is empty.</p>
+    <a href="{% url 'shop' %}" class="btn btn-primary">Shop Now</a>
+    {% endif %}
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js?v={% now 'YmdHis' %}"></script>
+<script>
+var options = {
+    "key": "{{ razorpay_key_id }}",
+    "amount": "{{ total_price|multiply:100|floatformat:0 }}",
+    "currency": "INR",
+    "name": "BharatBloom",
+    "description": "Purchase of handloom products",
+    "order_id": "{{ razorpay_order_id }}",
+    "handler": function (response){
+        console.log("Payment Response:", response);
+        alert("Payment successful! Payment ID: " + response.razorpay_payment_id);
+        window.location.href = "{% url 'cart' %}";
+    },
+    "prefill": {
+        "name": "{{ user.username }}",
+        "email": "{{ user.email }}"
+    },
+    "theme": {
+        "color": "#3399cc"
+    },
+    "modal": {
+        "ondismiss": function(){
+            console.log("Razorpay modal closed");
+        }
+    }
+};
+console.log("Razorpay Options:", options);
+var rzp = new Razorpay(options);
+document.getElementById('rzp-button').onclick = function(e){
+    console.log("Opening Razorpay checkout");
+    rzp.open();
+    e.preventDefault();
+}
+</script>
+{% endblock %}

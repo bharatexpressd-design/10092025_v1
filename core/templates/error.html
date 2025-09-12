@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+<h1>Error</h1>
+<div class="container">
+    <p>{{ message }}</p>
+    <a href="{% url 'shop' %}" class="btn btn-primary">Back to Shop</a>
+</div>
+{% endblock %}
