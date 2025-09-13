@@ -69,11 +69,18 @@ def checkout(request):
         'amount': int(total_price * 100),
         'currency': 'INR',
         'receipt': f'order_{request.user.id}',
-        'payment_capture': 1
+        'payment_capture': 1,
+        'notes': {'mode': 'test', 'test_payment': 'true'}
     }
     try:
         order = client.order.create(data=payment_data)
         print("Razorpay Order Response:", order)
+        print("Using Razorpay Key:", settings.RAZORPAY_KEY_ID)
+        print("Test Mode:", 'test' in settings.RAZORPAY_KEY_ID.lower())
+        print("Order Amount:", order['amount'], "Total Price (paise):", int(total_price * 100))
+        print("Order Currency:", order['currency'])
+        print("Order Notes:", order['notes'])
+        print("Session Key:", request.session.session_key)
     except razorpay.errors.BadRequestError as e:
         print("Razorpay Error:", str(e))
         return HttpResponseBadRequest(f'Payment error: {str(e)}')

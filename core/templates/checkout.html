@@ -41,7 +41,7 @@ var options = {
     "amount": "{{ total_price|multiply:100|floatformat:0 }}",
     "currency": "INR",
     "name": "BharatBloom",
-    "description": "Purchase of handloom products",
+    "description": "Purchase of handloom products (Test Mode)",
     "order_id": "{{ razorpay_order_id }}",
     "handler": function (response){
         console.log("Payment Response:", response);
@@ -58,15 +58,55 @@ var options = {
     "modal": {
         "ondismiss": function(){
             console.log("Razorpay modal closed");
+        },
+        "onerror": function(error){
+            console.log("Razorpay Payment Error:", error);
+            alert("Payment error: " + error.error.description + " (Code: " + error.error.code + ")");
+        }
+    },
+    "config": {
+        "display": {
+            "blocks": {
+                "cards": {
+                    "name": "Pay with Test Cards",
+                    "instruments": [
+                        {
+                            "method": "card",
+                            "types": ["credit", "debit"],
+                            "issuers": ["TEST"]
+                        }
+                    ]
+                }
+            },
+            "sequence": ["block.cards"],
+            "preferences": {
+                "show_default_blocks": false
+            }
         }
     }
 };
 console.log("Razorpay Options:", options);
-var rzp = new Razorpay(options);
+var rzp;
+try {
+    rzp = new Razorpay(options);
+    console.log("Razorpay Initialized Successfully");
+} catch (e) {
+    console.log("Razorpay Initialization Error:", e);
+    alert("Failed to initialize Razorpay: " + e.message);
+}
 document.getElementById('rzp-button').onclick = function(e){
     console.log("Opening Razorpay checkout");
-    rzp.open();
+    if (rzp) {
+        rzp.open();
+    } else {
+        console.log("Razorpay not initialized");
+        alert("Razorpay not initialized");
+    }
     e.preventDefault();
 }
+window.addEventListener('load', function() {
+    console.log("Razorpay SDK Version:", typeof Razorpay !== 'undefined' ? Razorpay.version : 'Not loaded');
+    console.log("Session ID:", "{{ request.session.session_key }}");
+});
 </script>
 {% endblock %}
