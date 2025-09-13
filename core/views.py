@@ -1,9 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from .models import Product, Cart, Category
 import razorpay
+import hmac
+import hashlib
+import json
 
 def home(request):
     return render(request, 'home.html')
@@ -91,3 +95,38 @@ def checkout(request):
         'razorpay_key_id': settings.RAZORPAY_KEY_ID,
         'user': request.user
     })
+
+@csrf_exempt
+@login_required
+def payment_success(request):
+    if request.method != 'POST':
+        return HttpResponseBadRequest('Invalid request method')
+    
+    try:
+        data = json.loads(request.body)
+        payment_id = data.get('payment_id')
+        order_id = data.get('order_id')
+        signature = data.get('signature')
+        
+        # Verify payment signature
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        params_dict = {
+            'razorpay_order_id': order_id,
+            'razorpay_payment_id': payment_id,
+            'razorpay_signature': signature
+        }
+        try:
+            client.utility.verify_payment_signature(params_dict)
+            print("Payment Signature Verified:", payment_id)
+        except razorpay.errors.SignatureVerificationError as e:
+            print("Signature Verification Error:", str(e))
+            return JsonResponse({'status': 'error', 'message': 'Invalid payment signature'}, status=400)
+        
+        # Clear the cart
+        Cart.objects.filter(user=request.user).delete()
+        print("Cart Cleared for User:", request.user.username)
+        
+        return JsonResponse({'status': 'success', 'message': 'Payment verified and cart cleared'})
+    except Exception as e:
+        print("Payment Success Error:", str(e))
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)

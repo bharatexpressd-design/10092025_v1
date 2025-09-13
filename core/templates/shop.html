@@ -40,7 +40,7 @@
                         {% if product.region %}| Region: {{ product.region }}{% endif %}
                     </p>
                     {% endif %}
-                    <a href="{% url 'cart_add' product.id %}" class="btn btn-primary">Add to Cart</a>
+                    <a href="{% url 'add_to_cart' product.id %}" class="btn btn-primary">Add to Cart</a>
                 </div>
             </div>
         </div>
@@ -48,5 +48,6 @@
         <p>No products available.</p>
         {% endfor %}
     </div>
+    <a href="{% url 'cart' %}" class="btn btn-secondary">View Cart</a>
 </div>
 {% endblock %}

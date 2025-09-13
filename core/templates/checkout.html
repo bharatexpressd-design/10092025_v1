@@ -49,8 +49,8 @@ var options = {
         window.location.href = "{% url 'cart' %}";
     },
     "prefill": {
-        "name": "{{ user.username }}",
-        "email": "{{ user.email }}"
+        "name": "Test User",
+        "email": "{{ user.email|default:'test@example.com' }}"
     },
     "theme": {
         "color": "#3399cc"
@@ -60,8 +60,8 @@ var options = {
             console.log("Razorpay modal closed");
         },
         "onerror": function(error){
-            console.log("Razorpay Payment Error:", error);
-            alert("Payment error: " + error.error.description + " (Code: " + error.error.code + ")");
+            console.log("Razorpay Payment Error:", JSON.stringify(error));
+            alert("Payment error: " + error.error.description + " (Code: " + error.error.code + ", Reason: " + error.error.reason + ", Metadata: " + JSON.stringify(error.error.metadata) + ")");
         }
     },
     "config": {
@@ -73,7 +73,8 @@ var options = {
                         {
                             "method": "card",
                             "types": ["credit", "debit"],
-                            "issuers": ["TEST"]
+                            "networks": ["Visa", "MasterCard", "Rupay", "Maestro", "Diners"],
+                            "issuers": ["TEST", "HDFC", "UTIB", "SBI", "ICICI"]
                         }
                     ]
                 }
@@ -87,25 +88,32 @@ var options = {
 };
 console.log("Razorpay Options:", options);
 var rzp;
-try {
-    rzp = new Razorpay(options);
-    console.log("Razorpay Initialized Successfully");
-} catch (e) {
-    console.log("Razorpay Initialization Error:", e);
-    alert("Failed to initialize Razorpay: " + e.message);
+function initializeRazorpay() {
+    try {
+        rzp = new Razorpay(options);
+        console.log("Razorpay Initialized Successfully");
+        console.log("Razorpay SDK Raw Version:", window.Razorpay ? window.Razorpay.version : 'Not available');
+    } catch (e) {
+        console.log("Razorpay Initialization Error:", e);
+        alert("Failed to initialize Razorpay: " + e.message);
+        setTimeout(initializeRazorpay, 1000); // Retry after 1 second
+    }
 }
+initializeRazorpay();
 document.getElementById('rzp-button').onclick = function(e){
     console.log("Opening Razorpay checkout");
     if (rzp) {
         rzp.open();
     } else {
-        console.log("Razorpay not initialized");
-        alert("Razorpay not initialized");
+        console.log("Razorpay not initialized, retrying...");
+        initializeRazorpay();
+        alert("Razorpay not initialized, retrying...");
     }
     e.preventDefault();
 }
 window.addEventListener('load', function() {
-    console.log("Razorpay SDK Version:", typeof Razorpay !== 'undefined' ? Razorpay.version : 'Not loaded');
+    console.log("Razorpay SDK Loaded:", typeof Razorpay !== 'undefined');
+    console.log("Razorpay SDK Version:", typeof Razorpay !== 'undefined' ? (Razorpay.version || 'Not available') : 'Not loaded');
     console.log("Session ID:", "{{ request.session.session_key }}");
 });
 </script>
