@@ -1,13 +1,22 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
-from django.http import HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponseBadRequest, JsonResponse, FileResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Product, Cart, Category
+from django.contrib import messages
+from django.contrib.auth.forms import UserChangeForm
+from django.contrib.auth.models import User
+from django import forms
+from .models import Product, Cart, Category, Order, OrderItem
 import razorpay
 import hmac
 import hashlib
 import json
+
+class CustomUserChangeForm(UserChangeForm):
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email')
 
 def home(request):
     return render(request, 'home.html')
@@ -85,13 +94,12 @@ def checkout(request):
     }
     try:
         order = client.order.create(data=payment_data)
-        print("Razorpay Order Response:", order)
-        print("Using Razorpay Key:", settings.RAZORPAY_KEY_ID)
-        print("Test Mode:", 'test' in settings.RAZORPAY_KEY_ID.lower())
-        print("Order Amount:", order['amount'], "Total Price (paise):", int(total_price * 100))
-        print("Order Currency:", order['currency'])
-        print("Order Notes:", order['notes'])
-        print("Session Key:", request.session.session_key)
+        Order.objects.create(
+            user=request.user,
+            razorpay_order_id=order['id'],
+            total_amount=total_price,
+            status='Pending'
+        )
     except razorpay.errors.BadRequestError as e:
         print("Razorpay Error:", str(e))
         return HttpResponseBadRequest(f'Payment error: {str(e)}')
@@ -108,32 +116,52 @@ def checkout(request):
 def payment_success(request):
     if request.method != 'POST':
         return HttpResponseBadRequest('Invalid request method')
-    
     try:
         data = json.loads(request.body)
         payment_id = data.get('payment_id')
         order_id = data.get('order_id')
         signature = data.get('signature')
-        
-        # Verify payment signature
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         params_dict = {
             'razorpay_order_id': order_id,
             'razorpay_payment_id': payment_id,
             'razorpay_signature': signature
         }
-        try:
-            client.utility.verify_payment_signature(params_dict)
-            print("Payment Signature Verified:", payment_id)
-        except razorpay.errors.SignatureVerificationError as e:
-            print("Signature Verification Error:", str(e))
-            return JsonResponse({'status': 'error', 'message': 'Invalid payment signature'}, status=400)
-        
-        # Clear the cart
+        client.utility.verify_payment_signature(params_dict)
+        order = Order.objects.get(razorpay_order_id=order_id, user=request.user)
+        order.razorpay_payment_id = payment_id
+        order.razorpay_signature = signature
+        order.status = 'Completed'
+        order.save()
+        cart_items = Cart.objects.filter(user=request.user)
+        for item in cart_items:
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                quantity=item.quantity,
+                price=item.product.price
+            )
         Cart.objects.filter(user=request.user).delete()
-        print("Cart Cleared for User:", request.user.username)
-        
         return JsonResponse({'status': 'success', 'message': 'Payment verified and cart cleared'})
-    except Exception as e:
-        print("Payment Success Error:", str(e))
+    except (razorpay.errors.SignatureVerificationError, Order.DoesNotExist) as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@login_required
+def profile(request):
+    if request.method == 'POST':
+        form = CustomUserChangeForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('profile')
+    else:
+        form = CustomUserChangeForm(instance=request.user)
+    return render(request, 'profile.html', {'form': form})
+
+@login_required
+def order_history(request):
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'order_history.html', {'orders': orders})
+
+def serve_media(request, path):
+    return FileResponse(open(settings.MEDIA_ROOT / path, 'rb'))
