@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -16,8 +17,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = 'django-insecure-6l@0!z3#k2#f%j0!q#e7z#n^7%y@2o#9n!z#k2#f%j0!q#e7z'
+
 DEBUG = True
-ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 # Application definition
 INSTALLED_APPS = [
@@ -93,7 +96,9 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / "core/static"]
+STATICFILES_DIRS = [
+    BASE_DIR / "core/static",
+]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Media files
@@ -104,25 +109,28 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Security settings
-SECURE_SSL_REDIRECT = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
+SECURE_SSL_REDIRECT = False  # Set to True in production with HTTPS
+SESSION_COOKIE_SECURE = False  # Set to True in production
+CSRF_COOKIE_SECURE = False  # Set to True in production
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
-SECURE_HSTS_SECONDS = 3600
+SECURE_HSTS_SECONDS = 3600  # Enable HSTS in production
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
 # Session settings
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-SESSION_COOKIE_AGE = 1209600
+SESSION_COOKIE_AGE = 1209600  # 2 weeks
 
-LOGIN_REDIRECT_URL = '/shop/'
+# Add to the end of settings.py
+LOGIN_REDIRECT_URL = '/shop/'  # Redirect to shop after login
 
 # Razorpay settings
 RAZORPAY_KEY_ID = 'rzp_test_RGmUM9PZW0VfrE'
 RAZORPAY_KEY_SECRET = 'ee17kX7Ym2A0EGIUocIOpXEp'
+
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
 
 LOGGING = {
     'version': 1,

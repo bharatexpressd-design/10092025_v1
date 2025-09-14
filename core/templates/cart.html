@@ -20,10 +20,18 @@
             <tr>
                 <td>{{ item.product.name }}</td>
                 <td>₹{{ item.product.price|floatformat:2 }}</td>
-                <td>{{ item.quantity }}</td>
+                <td>
+                    <a href="{% url 'remove_from_cart' item.product.id %}" class="btn btn-secondary btn-sm">-</a>
+                    {{ item.quantity }}
+                    <a href="{% url 'add_to_cart' item.product.id %}" class="btn btn-secondary btn-sm">+</a>
+                </td>
                 <td>₹{{ item.product.price|multiply:item.quantity|floatformat:2 }}</td>
                 <td>
-                    <a href="{% url 'remove_from_cart' item.product.id %}" class="btn btn-danger btn-sm">Remove</a>
+                    <form method="post" action="{% url 'remove_from_cart' item.product.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="remove_all" value="true">
+                        <button type="submit" class="btn btn-danger btn-sm">Remove All</button>
+                    </form>
                 </td>
             </tr>
             {% endfor %}

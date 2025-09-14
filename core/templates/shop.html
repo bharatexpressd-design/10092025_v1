@@ -40,7 +40,12 @@
                         {% if product.region %}| Region: {{ product.region }}{% endif %}
                     </p>
                     {% endif %}
-                    <a href="{% url 'add_to_cart' product.id %}" class="btn btn-primary">Add to Cart</a>
+                    <p class="card-text">Stock: {{ product.stock }}</p>
+                    <form method="post" action="{% url 'add_to_cart' product.id %}">
+                        {% csrf_token %}
+                        <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}" class="form-control d-inline-block w-25 me-2">
+                        <button type="submit" class="btn btn-primary">Add to Cart</button>
+                    </form>
                 </div>
             </div>
         </div>

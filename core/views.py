@@ -58,7 +58,9 @@ def add_to_cart(request, product_id):
 def remove_from_cart(request, product_id):
     try:
         cart_item = Cart.objects.get(user=request.user, product_id=product_id)
-        if cart_item.quantity > 1:
+        if request.method == 'POST' and request.POST.get('remove_all') == 'true':
+            cart_item.delete()
+        elif cart_item.quantity > 1:
             cart_item.quantity -= 1
             cart_item.save()
         else:
