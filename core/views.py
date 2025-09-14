@@ -40,7 +40,12 @@ def add_to_cart(request, product_id):
     try:
         product = Product.objects.get(id=product_id)
         cart_item, created = Cart.objects.get_or_create(user=request.user, product=product)
-        new_quantity = cart_item.quantity + 1 if not created else 1
+        quantity = 1
+        if request.method == 'POST':
+            quantity = int(request.POST.get('quantity', 1))
+            if quantity < 1:
+                return render(request, 'error.html', {'message': 'Invalid quantity'}, status=400)
+        new_quantity = cart_item.quantity + quantity if not created else quantity
         if new_quantity > product.stock:
             return render(request, 'error.html', {'message': f'Cannot add more {product.name}. Only {product.stock} in stock.'}, status=400)
         cart_item.quantity = new_quantity

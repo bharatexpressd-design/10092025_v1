@@ -45,8 +45,29 @@ var options = {
     "order_id": "{{ razorpay_order_id }}",
     "handler": function (response){
         console.log("Payment Response:", response);
-        alert("Payment successful! Payment ID: " + response.razorpay_payment_id);
-        window.location.href = "{% url 'cart' %}";
+        alert("Payment successful! Payment ID: " + response.razorpay_payment_id + ". Cart cleared.");
+        fetch("{% url 'payment_success' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': "{{ csrf_token }}"
+            },
+            body: JSON.stringify({
+                payment_id: response.razorpay_payment_id,
+                order_id: response.razorpay_order_id,
+                signature: response.razorpay_signature
+            })
+        }).then(response => response.json()).then(data => {
+            if (data.status === 'success') {
+                console.log("Cart cleared successfully");
+                window.location.href = "{% url 'cart' %}";
+            } else {
+                alert("Payment verification failed: " + data.message);
+            }
+        }).catch(error => {
+            console.log("Payment Verification Error:", error);
+            alert("Payment verification error: " + error.message);
+        });
     },
     "prefill": {
         "name": "Test User",
@@ -74,7 +95,7 @@ var options = {
                             "method": "card",
                             "types": ["credit", "debit"],
                             "networks": ["Visa", "MasterCard", "Rupay", "Maestro", "Diners"],
-                            "issuers": ["TEST", "HDFC", "UTIB", "SBI", "ICICI"]
+                            "issuers": ["HDFC", "UTIB", "SBI", "ICICI", "KARB"]
                         }
                     ]
                 }
@@ -96,7 +117,7 @@ function initializeRazorpay() {
     } catch (e) {
         console.log("Razorpay Initialization Error:", e);
         alert("Failed to initialize Razorpay: " + e.message);
-        setTimeout(initializeRazorpay, 1000); // Retry after 1 second
+        setTimeout(initializeRazorpay, 1000);
     }
 }
 initializeRazorpay();
