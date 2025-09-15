@@ -4,6 +4,10 @@ Django settings for ecommerce project.
 """
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
+# Load .env file
+load_dotenv()
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
