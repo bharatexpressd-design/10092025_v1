@@ -12,6 +12,7 @@ import razorpay
 import hmac
 import hashlib
 import json
+import os
 
 class CustomUserChangeForm(UserChangeForm):
     class Meta:
@@ -94,12 +95,13 @@ def checkout(request):
     }
     try:
         order = client.order.create(data=payment_data)
-        Order.objects.create(
-            user=request.user,
-            razorpay_order_id=order['id'],
-            total_amount=total_price,
-            status='Pending'
-        )
+        print("Razorpay Order Response:", order)
+        print("Using Razorpay Key:", settings.RAZORPAY_KEY_ID)
+        print("Test Mode:", 'test' in settings.RAZORPAY_KEY_ID.lower())
+        print("Order Amount:", order['amount'], "Total Price (paise):", int(total_price * 100))
+        print("Order Currency:", order['currency'])
+        print("Order Notes:", order['notes'])
+        print("Session Key:", request.session.session_key)
     except razorpay.errors.BadRequestError as e:
         print("Razorpay Error:", str(e))
         return HttpResponseBadRequest(f'Payment error: {str(e)}')
@@ -114,26 +116,42 @@ def checkout(request):
 @csrf_exempt
 @login_required
 def payment_success(request):
-    if request.method != 'POST':
-        return HttpResponseBadRequest('Invalid request method')
-    try:
+    if request.method == 'POST':
         data = json.loads(request.body)
         payment_id = data.get('payment_id')
         order_id = data.get('order_id')
         signature = data.get('signature')
+    else:
+        payment_id = request.GET.get('razorpay_payment_id')
+        order_id = request.GET.get('razorpay_order_id')
+        signature = request.GET.get('razorpay_signature')
+
+    try:
+        # Verify payment signature
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         params_dict = {
             'razorpay_order_id': order_id,
             'razorpay_payment_id': payment_id,
             'razorpay_signature': signature
         }
-        client.utility.verify_payment_signature(params_dict)
-        order = Order.objects.get(razorpay_order_id=order_id, user=request.user)
-        order.razorpay_payment_id = payment_id
-        order.razorpay_signature = signature
-        order.status = 'Completed'
-        order.save()
+        try:
+            client.utility.verify_payment_signature(params_dict)
+            print("Payment Signature Verified:", payment_id)
+        except razorpay.errors.SignatureVerificationError as e:
+            print("Signature Verification Error:", str(e))
+            return JsonResponse({'status': 'error', 'message': 'Invalid payment signature'}, status=400)
+        
+        # Create Order and OrderItem
         cart_items = Cart.objects.filter(user=request.user)
+        total_price = sum(item.product.price * item.quantity for item in cart_items)
+        order = Order.objects.create(
+            user=request.user,
+            razorpay_order_id=order_id,
+            razorpay_payment_id=payment_id,
+            razorpay_signature=signature,
+            total_amount=total_price,
+            status='Completed'
+        )
         for item in cart_items:
             OrderItem.objects.create(
                 order=order,
@@ -141,10 +159,55 @@ def payment_success(request):
                 quantity=item.quantity,
                 price=item.product.price
             )
+        
+        # Clear the cart
         Cart.objects.filter(user=request.user).delete()
+        print("Cart Cleared for User:", request.user.username)
+        
         return JsonResponse({'status': 'success', 'message': 'Payment verified and cart cleared'})
-    except (razorpay.errors.SignatureVerificationError, Order.DoesNotExist) as e:
+    except Exception as e:
+        print("Payment Success Error:", str(e))
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@login_required
+def retry_payment(request, order_id):
+    order = get_object_or_404(Order, razorpay_order_id=order_id, user=request.user, status='Pending')
+    cart_items = Cart.objects.filter(user=request.user)
+    if not cart_items:
+        return HttpResponseBadRequest('Cart is empty')
+    total_price = sum(item.product.price * item.quantity for item in cart_items)
+    if total_price != order.total_amount:
+        return HttpResponseBadRequest('Cart total does not match order amount')
+    client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    payment_data = {
+        'amount': int(total_price * 100),
+        'currency': 'INR',
+        'receipt': f'order_{request.user.id}',
+        'payment_capture': 1,
+        'notes': {'mode': 'test', 'test_payment': 'true'}
+    }
+    try:
+        new_order = client.order.create(data=payment_data)
+        order.razorpay_order_id = new_order['id']
+        order.save()
+    except razorpay.errors.BadRequestError as e:
+        print("Razorpay Error:", str(e))
+        return HttpResponseBadRequest(f'Payment error: {str(e)}')
+    return render(request, 'checkout.html', {
+        'cart_items': cart_items,
+        'total_price': total_price,
+        'razorpay_order_id': new_order['id'],
+        'razorpay_key_id': settings.RAZORPAY_KEY_ID,
+        'user': request.user
+    })
+
+@login_required
+def cancel_order(request, order_id):
+    order = get_object_or_404(Order, razorpay_order_id=order_id, user=request.user, status='Pending')
+    order.status = 'Cancelled'
+    order.save()
+    messages.success(request, f'Order {order_id} has been cancelled.')
+    return redirect('order_history')
 
 @login_required
 def profile(request):
@@ -164,4 +227,10 @@ def order_history(request):
     return render(request, 'order_history.html', {'orders': orders})
 
 def serve_media(request, path):
-    return FileResponse(open(settings.MEDIA_ROOT / path, 'rb'))
+    # Strip 'products/' from the path if present
+    if path.startswith('products/'):
+        path = path[len('products/'):]
+    file_path = os.path.join(settings.MEDIA_ROOT, path)
+    if os.path.exists(file_path):
+        return FileResponse(open(file_path, 'rb'), content_type='image/jpeg')
+    raise FileNotFoundError(f"No such file or directory: '{file_path}'")
