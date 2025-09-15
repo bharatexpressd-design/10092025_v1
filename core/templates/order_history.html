@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Order History</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Total Amount</th>
+                <th>Status</th>
+                <th>Items</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.razorpay_order_id }}</td>
+                <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+                <td>₹{{ order.total_amount|floatformat:2 }}</td>
+                <td>{{ order.status }}</td>
+                <td>
+                    {% for item in order.items.all %}
+                        {{ item.quantity }} x {{ item.product.name }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        No items
+                    {% endfor %}
+                </td>
+                <td>
+                    {% if order.status == 'Pending' %}
+                        <a href="{% url 'retry_payment' order.razorpay_order_id %}" class="btn btn-sm btn-primary">Retry Payment</a>
+                        <a href="{% url 'cancel_order' order.razorpay_order_id %}" class="btn btn-sm btn-danger">Cancel</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">No orders found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
