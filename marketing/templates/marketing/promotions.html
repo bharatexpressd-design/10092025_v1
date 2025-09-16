@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static django_bootstrap5 %}
+{% block title %}Promotions - BharatBloom{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>Promotions</h1>
+    {% if promotions %}
+    <div class="row">
+        {% for promotion in promotions %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ promotion.product.name }}</h5>
+                    <p class="card-text">{{ promotion.discount_percentage }}% off</p>
+                    <p class="card-text">Valid until {{ promotion.end_date|date:"Y-m-d" }}</p>
+                    <a href="{% url 'shop' %}" class="btn btn-primary">Shop Now</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No active promotions.</p>
+    {% endif %}
+    <a href="{% url 'shop' %}" class="btn btn-primary">Continue Shopping</a>
+</div>
+{% endblock %}

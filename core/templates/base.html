@@ -1,16 +1,19 @@
 {% load static django_bootstrap5 %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="BharatBloom - Your trusted online shopping platform for Indian handlooms and more">
+    <meta name="description"
+        content="BharatBloom - Your trusted online shopping platform for Indian handlooms and more">
     <meta name="keywords" content="ecommerce, shopping, handlooms, BharatBloom">
     <title>{% block title %}BharatBloom{% endblock %}</title>
     {% bootstrap_css %}
     <link rel="stylesheet" href="{% static 'css/custom.css' %}">
     <link rel="icon" href="{% static 'favicon.ico' %}?v=1">
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
@@ -22,12 +25,17 @@
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'shop' %}">Shop</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'promotions' %}">Promotions</a></li>
                     {% if user.is_authenticated %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'cart' %}">Cart</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'track_order' %}">Track Order</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'profile' %}">Profile</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'order_history' %}">Orders</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'admin:index' %}">Admin</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
                     {% else %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Register</a></li>
                     {% endif %}
                 </ul>
             </div>
@@ -39,4 +47,5 @@
     </div>
     {% bootstrap_javascript %}
 </body>
+
 </html>
