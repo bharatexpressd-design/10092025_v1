@@ -234,3 +234,18 @@ def serve_media(request, path):
     if os.path.exists(file_path):
         return FileResponse(open(file_path, 'rb'), content_type='image/jpeg')
     raise FileNotFoundError(f"No such file or directory: '{file_path}'")
+from django.shortcuts import render, redirect
+from django.contrib.auth.forms import UserCreationForm
+
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Registration successful! Please log in.')
+            return redirect('login')
+        else:
+            return render(request, 'registration/register.html', {'form': form})
+    else:
+        form = UserCreationForm()
+    return render(request, 'registration/register.html', {'form': form})
